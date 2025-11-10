@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mobile Left Slide Menu (Full Width)</title>
+<style>
+  /* ---------- Base / Reset ---------- */
+  :root{
+    --panel-bg: #ffe6ea; /* light pink panel */
+    --accent: #fa1239;   /* accent color */
+    --text: #111;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* ---------- NAVBAR (mobile only) ---------- */
+  .navbar{
+    display:none; /* hidden on desktop by default */
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    background:transparent;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:40;
+  }
+
+  .logo{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    font-weight:600;
+    font-size:16px;
+  }
+
+  .logo img{ height:34px; width:auto; display:block; }
+
+  /* hamburger button (mobile) */
+  .hamburger{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    border-radius:8px;
+    background:transparent;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+    user-select:none;
+  }
+
+  /* ---------- OVERLAY & SIDEBAR ---------- */
+  /* overlay covers whole viewport and provides blur + dim */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .28s ease;
+    z-index:45;
+  }
+
+  /* sidebar panel full width from left */
+  .side-panel{
+    position:fixed;
+    top:0;
+    height:100vh;
+    background:var(--panel-bg);
+    left: auto;
+    right: 0;
+    width: 90vw;
+    transform: translateX(100%);
+    box-shadow: 8px 0 24px rgba(0,0,0,0.12);
+    transition:transform .32s cubic-bezier(.2,.9,.3,1);
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    padding:20px 20px;
+    gap:18px;
+  }
+
+  .side-panel{
+  left: auto;
+  right: 0;
+  width: 80vw;
+  transform: translateX(100%);
+}
+
+.side-panel.open{
+  transform: translateX(0);
+}
+
+  /* When open, overlay visible and panel slides in */
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .side-panel.open{ transform:translateX(0); }
+
+  /* top row inside panel: logo + close button */
+  .panel-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .close-btn{
+    font-size:22px;
+    width:40px;
+    height:40px;
+    border-radius:8px;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+  }
+
+  /* menu list */
+  .panel-nav{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:6px;
+    flex:1;
+  }
+
+  .panel-nav a{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    padding:10px 6px;
+    text-decoration:none;
+    color:var(--text);
+    font-size:16px;
+    border-radius:8px;
+  }
+
+  .panel-nav a:hover{ background: rgba(0,0,0,0.03); }
+
+  /* emoji/icon container */
+  .icon{
+    min-width:34px;
+    height:34px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:6px;
+    font-size:18px;
+  }
+
+  /* contact button at bottom */
+  .panel-footer{
+    padding:6px 0 12px 0;
+  }
+
+  .contact-btn{
+    width:100%;
+    display:inline-block;
+    text-align:center;
+    padding:12px 14px;
+    border-radius:28px;
+    background: linear-gradient(90deg,var(--accent), #ff4b6b);
+    color:#fff;
+    font-weight:700;
+    text-decoration:none;
+    box-shadow: 0 6px 18px rgba(250,18,57,0.18);
+  }
+
+  /* ---------- Accessibility / body lock when open ---------- */
+  body.menu-open{
+    overflow:hidden;
+    touch-action: none;
+  }
+
+  /* ---------- Responsive: show navbar only on mobile ---------- */
+  @media (max-width: 768px){
+    .navbar{ display:flex; }
+  }
+
+  /* larger screens keep everything hidden (you said mobile-only) */
+  @media (min-width: 769px){
+    .overlay, .side-panel{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR (mobile only) -->
+<header class="navbar" role="banner">
+  <div class="logo">
+    <!-- placeholder logo: replace img src or text as needed -->
+    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='34'><rect width='120' height='34' fill='%23fde9ec' /><text x='8' y='22' fill='%23fa1239' font-family='Arial' font-size='14'>COMPANY</text></svg>" alt="logo">
+    <span style="font-size:12px;color:#ba4b58">business tagline</span>
+  </div>
+
+  <button id="hamburger" class="hamburger" aria-label="Open menu" aria-expanded="false">☰</button>
+</header>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay" tabindex="-1" aria-hidden="true"></div>
+
+<!-- SIDE PANEL (full width slide from left) -->
+<aside id="panel" class="side-panel" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+  <div class="panel-top">
+    <div class="logo" style="gap:8px;">
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='34'><rect width='120' height='34' fill='%23fde9ec' /><text x='8' y='22' fill='%23fa1239' font-family='Arial' font-size='14'>COMPANY</text></svg>" alt="logo">
+      <span style="font-size:12px;color:#ba4b58">business tagline</span>
+    </div>
+    <button id="closeBtn" class="close-btn" aria-label="Close menu">✖</button>
+  </div>
+
+  <nav class="panel-nav" aria-label="Main">
+    <!-- Emoji placeholders; replace later with your icons -->
+    <a href="#home"><span class="icon">🏠</span> Home</a>
+    <a href="#about"><span class="icon">ℹ️</span> About Us</a>
+    <a href="#services"><span class="icon">🛠️</span> Our Services</a>
+    <a href="#pricing"><span class="icon">🏷️</span> Pricing</a>
+    <a href="#faq"><span class="icon">❓</span> FAQ</a>
+  </nav>
+
+  <div class="panel-footer">
+    <a href="#contact" class="contact-btn">CONTACT US</a>
+  </div>
+</aside>
+
+<!-- Example page content (for testing scrolling / overlay) -->
+<main style="padding:120px 16px;">
+  <h1>Page content</h1>
+  <p>
+    This is placeholder content. Open the menu on a small screen to see the full-width slide-in menu with overlay & blur.
+  </p>
+  <p style="margin-top:100vh">Scroll down test content (makes page tall).</p>
+</main>
+
+<script>
+  // Elements
+  const hamburger = document.getElementById('hamburger');
+  const panel = document.getElementById('panel');
+  const overlay = document.getElementById('overlay');
+  const closeBtn = document.getElementById('closeBtn');
+  const navLinks = document.querySelectorAll('.panel-nav a');
+
+  // Open/close helper
+  function openMenu(){
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.classList.add('menu-open');
+    hamburger.textContent = '✖';
+    hamburger.setAttribute('aria-expanded','true');
+    panel.setAttribute('aria-hidden','false');
+    overlay.setAttribute('aria-hidden','false');
+    // move focus into panel for accessibility
+    closeBtn.focus();
+  }
+
+  function closeMenu(){
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.classList.remove('menu-open');
+    hamburger.textContent = '☰';
+    hamburger.setAttribute('aria-expanded','false');
+    panel.setAttribute('aria-hidden','true');
+    overlay.setAttribute('aria-hidden','true');
+    // return focus to hamburger
+    hamburger.focus();
+  }
+
+  // Toggle button
+  hamburger.addEventListener('click', () => {
+    const isOpen = panel.classList.contains('open');
+    if(isOpen) closeMenu();
+    else openMenu();
+  });
+
+  // close button
+  closeBtn.addEventListener('click', closeMenu);
+
+  // clicking overlay closes menu
+  overlay.addEventListener('click', closeMenu);
+
+  // close when any link clicked
+  navLinks.forEach(link => link.addEventListener('click', (e) => {
+    // for single-page anchors, you might want to prevent default and handle navigation manually
+    closeMenu();
+  }));
+
+  // close on ESC
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && panel.classList.contains('open')) closeMenu();
+  });
+
+  // Ensure menu is hidden if viewport becomes large while open
+  window.addEventListener('resize', () => {
+    if(window.innerWidth > 768 && panel.classList.contains('open')){
+      closeMenu();
+    }
+  });
+</script>
+</body>
+</html>
